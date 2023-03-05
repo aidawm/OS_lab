@@ -1,2 +1,3 @@
-1 aida 80
-2 sina 100
+2 sara 40
+1 aida 25
+4 mahsa 85
