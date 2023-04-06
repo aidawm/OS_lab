@@ -9,7 +9,6 @@
 
 int main(int argc, char const *argv[]) {
     //0. define variables
-    printf("\nhi :/\n");
     struct sockaddr_in sock_addr;
     memset(&sock_addr, '0', sizeof(sock_addr));
     sock_addr.sin_family = AF_INET;
@@ -36,10 +35,6 @@ int main(int argc, char const *argv[]) {
         printf("\nConnection Failed \n");
         return -1;
     }
-    char *hello = "Hello from client";
-    send(socketFD, hello, strlen(hello), 0);
-    printf("Hello message sent\n");
-    printf("hora\n");
     char *message = NULL;
     ssize_t message_size = 0;
 
