@@ -5,7 +5,25 @@
 #include <arpa/inet.h>
 #include <string.h>
 #include <unistd.h>
+#include <pthread.h>
 
+void reciever(int client_FD){
+    char buffer[1024]={0};
+
+    while(1){
+        ssize_t valread = recv(client_FD, buffer, 1024,0);
+        if(valread ==0)
+            break;
+        buffer[valread] = 0;
+        printf("%s",buffer);
+    }
+    close(client_FD);
+}
+
+void recieverThread(int socketFD){
+    pthread_t id;
+    pthread_create(&id,NULL,reciever,socketFD);
+}
 
 int main(int argc, char const *argv[]) {
     //0. define variables
@@ -35,19 +53,25 @@ int main(int argc, char const *argv[]) {
         printf("\nConnection Failed \n");
         return -1;
     }
+    send(socketFD,argv[3],sizeof(argv),0);
+    recieverThread(socketFD);
+    
     char *message = NULL;
     ssize_t message_size = 0;
 
     while(1){
+        
         ssize_t char_count = getline(&message,&message_size,stdin);
 
         if(char_count >0){
             if(strcmp(message,"exit\n")==0){
                 break;
             }
+            
             ssize_t send_count = send(socketFD,message,message_size,0);
         }
     }
 
+    
     return 0;
 }

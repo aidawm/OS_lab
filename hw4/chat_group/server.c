@@ -10,10 +10,14 @@
 
 
 struct acceptedClient {
+    char client_name[10];
     int client_FD;
     struct sockaddr_in clientAddress;
     bool isSuccessfull 
 };
+
+struct acceptedClient client_list[10];
+int online_clients = 0;
 
 struct acceptedClient* accept_client(int serverFd){
     struct sockaddr_in clientAddress;
@@ -21,10 +25,17 @@ struct acceptedClient* accept_client(int serverFd){
     int clientSocketFD = accept(serverFd,(struct sockaddr *)&clientAddress,&clientAddressSize);
 
     struct acceptedClient* client = malloc(sizeof(struct acceptedClient));
-
+    char name[10];
+    ssize_t valread = recv(clientSocketFD, name, 10,0);
     client->client_FD = clientSocketFD;
     client->clientAddress = clientAddress;
     client->isSuccessfull = !(clientSocketFD < 0);
+    if(valread>0){
+        name[valread]=0;
+        strcpy(client->client_name , name);
+        printf("%s is online\n",client->client_name);
+
+    }
 
     return client;
 }
@@ -65,21 +76,37 @@ int setup_server(char const *argv[]){
     return server_fd;
 }
 
-void recieve_client_messages(int client_FD){
+void recieve_client_messages(struct acceptedClient *client){
     char buffer[1024]={0};
     while(1){
-        ssize_t valread = recv(client_FD, buffer, 1024,0);
+        ssize_t valread = recv(client->client_FD, buffer, 1024,0);
         if(valread ==0)
             break;
         buffer[valread] = 0;
-        printf("client = %s",buffer);
+        char message[1024];
+        sprintf(message,"%s:%s",client->client_name,buffer);
+        // char *message = strcat(client->client_name,buffer);
+        send_message_to_others(client->client_FD,message);
+
+        printf("%s : %s",client->client_name,buffer);
+        
     }
-    close(client_FD);
+    close(client->client_FD);
 }
 
-void reciever_thread(int client_FD){
+void reciever_thread(struct acceptedClient *client){
     pthread_t id;
-    pthread_create(&id,NULL,recieve_client_messages,client_FD);
+    pthread_create(&id,NULL,recieve_client_messages,client);
+}
+
+void send_message_to_others(int client_FD,char* message){
+    
+    for(int i=0;i<online_clients;i++){
+        if(client_list[i].client_FD != client_FD){
+            printf("%li",sizeof(message));
+            send(client_list[i].client_FD , message, 1024,0);
+        }
+    }
 }
 
 int main(int argc, char const *argv[]) {   
@@ -89,12 +116,14 @@ int main(int argc, char const *argv[]) {
 
     //4. accept 
     while(1){
-       struct acceptedClient *client = accept_client(server_fd);
-        reciever_thread(client->client_FD);
+        if(online_clients ==10){
+            continue;
+        }
+        struct acceptedClient *client = accept_client(server_fd);
+        client_list[online_clients++] = *client;
+        reciever_thread(client);
     }
     
-
-
 
     //5. recieve messages 
     
