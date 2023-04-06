@@ -6,6 +6,7 @@
 #include <arpa/inet.h>
 #include <string.h>
 #include <stdbool.h>
+#include <pthread.h>
 
 
 struct acceptedClient {
@@ -64,24 +65,39 @@ int setup_server(char const *argv[]){
     return server_fd;
 }
 
+void recieve_client_messages(int client_FD){
+    char buffer[1024]={0};
+    while(1){
+        ssize_t valread = recv(client_FD, buffer, 1024,0);
+        if(valread ==0)
+            break;
+        buffer[valread] = 0;
+        printf("client = %s",buffer);
+    }
+    close(client_FD);
+}
+
+void reciever_thread(int client_FD){
+    pthread_t id;
+    pthread_create(&id,NULL,recieve_client_messages,client_FD);
+}
+
 int main(int argc, char const *argv[]) {   
 
 
     int server_fd = setup_server(argv);
 
     //4. accept 
-    struct acceptedClient *client = accept_client(server_fd);
+    while(1){
+       struct acceptedClient *client = accept_client(server_fd);
+        reciever_thread(client->client_FD);
+    }
+    
+
+
 
     //5. recieve messages 
-    char buffer[1024]={0};
-    while(1){
-        ssize_t valread = recv(client->client_FD, buffer, 1024,0);
-        if(valread ==0)
-            break;
-        buffer[valread] = 0;
-        printf("client = %s",buffer);
-    }
-    close(client->client_FD);
+    
     shutdown(server_fd,SHUT_RDWR);
 
     return 0 ;
