@@ -5,7 +5,7 @@ struct process{
     int burst_time;
     int waiting_time;
     int response_time;
-}p[10];
+};
 
 int main(){
     int num_process;
@@ -30,13 +30,15 @@ int main(){
     }
     int total_waiting = 0 , total_response=0;
     for(int i=0;i<num_process;i++){
-        printf("%i  : burst_time = %i , waiting_time = %i , response_time = %i\n",p[i].pid,p[i].burst_time,p[i].waiting_time,p[i].response_time);
+        printf("%i  : burst_time = %i , waiting_time = %i , response_time = %i\n"
+                ,p[i].pid,p[i].burst_time,p[i].waiting_time,p[i].response_time);
         total_response += p[i].response_time;
         total_waiting += p[i].waiting_time;
     }
     printf("----------------------\n");
 
-    printf("waiting_average = %f\tresponse_average = %f\n",((float)total_waiting/num_process),((float)total_response/num_process));
+    printf("waiting_average = %f\tresponse_average = %f\n"
+            ,((float)total_waiting/num_process),((float)total_response/num_process));
 
     return 0;
 }
